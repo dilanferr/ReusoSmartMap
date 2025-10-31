@@ -1,32 +1,13 @@
 import { Stack } from "expo-router";
 
-export default function Layout() {
+export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: "#00b894" },
-        headerTintColor: "#fff",
-        headerTitleStyle: { fontWeight: "bold" },
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          title: "Mapa de Reciclaje",
-        }}
-      />
-      <Stack.Screen
-        name="login"
-        options={{
-          title: "Iniciar Sesión",
-        }}
-      />
-      <Stack.Screen
-        name="register"
-        options={{
-          title: "Registro",
-        }}
-      />
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* 🚀 Abre siempre las pestañas primero */}
+      <Stack.Screen name="(tabs)" />
+      
+      {/* 🔐 Pantallas de autenticación (accesibles desde Perfil) */}
+      <Stack.Screen name="(auth)" />
     </Stack>
   );
 }
