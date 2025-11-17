@@ -3,6 +3,9 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -10,7 +13,6 @@ import {
   View,
 } from "react-native";
 import { BACKEND_URL } from "../../config";
-console.log(BACKEND_URL);
 
 export default function Register() {
   const router = useRouter();
@@ -19,24 +21,36 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const fadeAnim = new Animated.Value(0);
+
+  // Animación de entrada
+  Animated.timing(fadeAnim, {
+    toValue: 1,
+    duration: 600,
+    useNativeDriver: true,
+  }).start();
+
   const handleRegister = async () => {
     if (!nombre || !email || !password) {
-      Alert.alert("Campos incompletos", "Completa todos los campos.");
-      return;
+      return Alert.alert(
+        "Campos incompletos",
+        "Por favor completa todos los campos."
+      );
     }
 
-    // Validar formato de contraseña
+    // Validación de contraseña
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
     if (!passwordRegex.test(password)) {
-      Alert.alert(
+      return Alert.alert(
         "Contraseña insegura",
-        "Debe tener mínimo 8 caracteres, mayúscula, minúscula, número y símbolo."
+        "Debe tener mínimo 8 caracteres, una letra mayúscula, una minúscula, un número y un símbolo."
       );
-      return;
     }
 
     setLoading(true);
+
     try {
       const response = await fetch(`${BACKEND_URL}/users/register`, {
         method: "POST",
@@ -53,9 +67,10 @@ export default function Register() {
       console.log("📩 Respuesta del backend:", data);
 
       if (response.ok) {
-        Alert.alert("✅ Registro exitoso", "Tu cuenta ha sido creada.", [
+        Alert.alert("🎉 Registro exitoso", "Tu cuenta ha sido creada correctamente.", [
           { text: "Iniciar sesión", onPress: () => router.replace("/(auth)/login") },
         ]);
+
         setNombre("");
         setEmail("");
         setPassword("");
@@ -64,98 +79,132 @@ export default function Register() {
       }
     } catch (error) {
       console.error("❌ Error al registrar:", error);
-      Alert.alert(
-        "Error de conexión",
-        "No se pudo conectar con el servidor. Verifica tu red."
-      );
+      Alert.alert("Error de conexión", "No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Crear Cuenta</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <Text style={styles.title}>Crear Cuenta</Text>
+        <Text style={styles.subtitle}>
+          Únete a ReusoSmart y comienza a reciclar con impacto.
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre completo"
-        placeholderTextColor="#999"
-        value={nombre}
-        onChangeText={setNombre}
-      />
+        <View style={styles.card}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre completo"
+            placeholderTextColor="#aaa"
+            value={nombre}
+            onChangeText={setNombre}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        placeholderTextColor="#999"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Correo electrónico"
+            placeholderTextColor="#aaa"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña segura"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña segura"
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
-      <TouchableOpacity
-        style={[styles.button, loading && { opacity: 0.7 }]}
-        onPress={handleRegister}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Registrarse</Text>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.7 }]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Registrarse</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-        <Text style={styles.link}>¿Ya tienes cuenta? Inicia sesión</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+          <Text style={styles.link}>¿Ya tienes cuenta? Inicia sesión</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 28,
+    backgroundColor: "#F8F9F8",
     justifyContent: "center",
-    padding: 30,
-    backgroundColor: "#F8F8F8",
   },
+
   title: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "bold",
     color: "#006D40",
-    marginBottom: 30,
     textAlign: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15,
-    backgroundColor: "white",
+
+  subtitle: {
+    textAlign: "center",
+    color: "#555",
+    fontSize: 14,
+    marginBottom: 25,
   },
+
+  card: {
+    backgroundColor: "white",
+    padding: 22,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    marginBottom: 20,
+    elevation: 2,
+  },
+
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+    paddingVertical: 12,
+    marginBottom: 22,
+    fontSize: 15,
+    color: "#333",
+  },
+
   button: {
     backgroundColor: "#006D40",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 15,
+    alignItems: "center",
   },
-  buttonText: { color: "white", fontWeight: "bold", textAlign: "center" },
+
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
   link: {
     color: "#006D40",
-    marginTop: 20,
     textAlign: "center",
-    fontWeight: "500",
+    marginTop: 10,
+    fontWeight: "bold",
   },
 });

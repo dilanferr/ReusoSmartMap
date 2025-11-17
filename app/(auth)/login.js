@@ -112,7 +112,16 @@ export default function Login() {
             <Text style={styles.buttonText}>Iniciar Sesión</Text>
           )}
         </TouchableOpacity>
-
+        <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
+          <Text style={{ 
+              color: "#006D40", 
+              marginTop: 15, 
+              textAlign: "center",
+              fontWeight: "600"
+            }}>
+            ¿Olvidaste tu contraseña?
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
           <Text style={styles.link}>
             ¿No tienes cuenta?{" "}
