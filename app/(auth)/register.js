@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BACKEND_URL } from "../../config";
+console.log(BACKEND_URL);
 
 export default function Register() {
   const router = useRouter();
@@ -36,7 +38,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://192.168.1.7:5000/api/users/register", {
+      const response = await fetch(`${BACKEND_URL}/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

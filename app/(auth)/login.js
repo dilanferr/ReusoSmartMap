@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BACKEND_URL } from "../../config";
+console.log(BACKEND_URL);
 
 export default function Login() {
   const router = useRouter();
@@ -26,7 +28,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://192.168.1.7:5000/api/users/login", {
+      const response = await fetch(`${BACKEND_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

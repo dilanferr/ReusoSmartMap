@@ -20,13 +20,16 @@ import {
 } from "react-native";
 
 
-const HF_API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxx";
+import { BACKEND_URL, HF_API_KEY, HF_MODEL } from "../../config";
 
-const HF_MODEL = "apple/mobilevit-small";
-const BACKEND_URL = "http://192.168.1.7:5000/api";
+
+console.log(HF_API_KEY);
+console.log(BACKEND_URL);
+
 
 // =======================================================
 // 🧠 NORMALIZADOR UNIVERSAL IA → CATEGORÍAS BD
+// (CLAVES QUE MATCHEAN CON materiales_aceptados EN LA BD)
 // =======================================================
 const normalizarDispositivo = (label) => {
   const texto = label.toLowerCase();
@@ -39,7 +42,7 @@ const normalizarDispositivo = (label) => {
     texto.includes("macbook") ||
     texto.includes("computer")
   ) {
-    return "laptop";
+    return "Laptop";
   }
 
   // CELULARES
@@ -50,31 +53,23 @@ const normalizarDispositivo = (label) => {
     texto.includes("iphone") ||
     texto.includes("android") ||
     texto.includes("mobile") ||
-    texto.includes("ipod") 
+    texto.includes("ipod")
   ) {
-    return "phone";
+    return "Celular";
   }
 
-  // POWER BANK
+  // POWER BANK / PILA PORTÁTIL
   if (
     texto.includes("power") ||
     texto.includes("bank") ||
     texto.includes("battery")
   ) {
-    return "power_bank";
+    return "Pila";
   }
 
   return texto;
 };
 
-// =======================================================
-// 🔍 Traducción para mostrar al usuario (sin impactar BD)
-// =======================================================
-const traducciones = {
-  phone: "Teléfono celular",
-  laptop: "Computador portátil",
-  power_bank: "Batería portátil",
-};
 
 // =======================================================
 // 📏 Distancia en km
@@ -122,7 +117,7 @@ export default function EscanearScreen() {
   }, []);
 
   // =======================================================
-  // 📸 Tomar foto
+  // Tomar foto
   // =======================================================
   const takePhoto = async () => {
     if (photos.length >= MAX_PHOTOS) {
@@ -151,7 +146,7 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // 🔍 Analizar TODAS las fotos y generar 1 resultado final
+  // Analizar TODAS las fotos y generar 1 resultado final
   // =======================================================
   const analyzeAll = async () => {
     if (photos.length === 0) {
@@ -207,11 +202,11 @@ export default function EscanearScreen() {
 
       if (!best) throw new Error("No se obtuvo un resultado claro.");
 
-      const traducido = traducciones[best.label] || best.label;
+      const displayName = traducciones[best.label] || best.label;
 
       setFinalResult({
         label: best.label,
-        display: traducido,
+        display: displayName,
         score: (best.avgScore * 100).toFixed(1),
       });
 
@@ -226,7 +221,7 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // 🌍 Buscar punto más cercano QUE ACEPTE ese material
+  // Buscar punto más cercano QUE ACEPTE ese material
   // =======================================================
   const confirmNearestPoint = async (tipo, confidence) => {
     try {
@@ -244,14 +239,15 @@ export default function EscanearScreen() {
       setPuntos(puntosResp);
 
       // FILTRO: solo puntos que aceptan ese material
-      const compatibles = puntosResp.filter(
-        (p) => p.materiales_aceptados?.includes(tipo)
+      const compatibles = puntosResp.filter((p) =>
+        (p.materiales_aceptados || []).includes(tipo)
       );
 
       if (compatibles.length === 0) {
+        const displayName = traducciones[tipo] || tipo;
         Alert.alert(
           "Sin puntos compatibles",
-          `No se encontraron puntos que acepten "${tipo}".`
+          `No se encontraron puntos que acepten "${displayName}".`
         );
         return;
       }
@@ -269,20 +265,21 @@ export default function EscanearScreen() {
       });
 
       const distKm = minDist.toFixed(2);
+      const displayName = traducciones[tipo] || tipo;
 
       Alert.alert(
-        "♻️ Confirmación",
-        `¿Estás en este punto?\n\n📍 ${nearest.direccion_completa}\n🏙️ ${nearest.comuna_nombre}\n🌎 ${nearest.region_nombre}\n📏 ${distKm} km`,
+        "♻️ Confirmación de punto",
+        `Material detectado: ${displayName}\n\n¿Estás en este punto?\n\n📍 ${nearest.direccion_completa}\n🏙️ ${nearest.comuna_nombre}\n🌎 ${nearest.region_nombre}\n📏 ${distKm} km`,
         [
           {
-            text: "No",
+            text: "No, elegir otro",
             onPress: () => {
               setPendingRecord({ tipo, confidence, loc });
               setSelectVisible(true);
             },
           },
           {
-            text: "Sí",
+            text: "Sí, confirmar",
             onPress: () =>
               registerRecycling(tipo, confidence, loc, nearest.direccion_completa),
           },
@@ -294,7 +291,7 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // ♻️ Registrar reciclaje
+  // Registrar reciclaje
   // =======================================================
   const registerRecycling = async (tipo, confidence, loc, direccion) => {
     try {
@@ -325,7 +322,7 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // 🗑️ Eliminar foto
+  // Eliminar foto
   // =======================================================
   const deletePhoto = (index) => {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
@@ -333,7 +330,7 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // 🔎 Filtrar puntos manualmente
+  // Filtrar puntos manualmente
   // =======================================================
   const filteredPoints = puntos.filter(
     (p) =>
@@ -352,79 +349,159 @@ export default function EscanearScreen() {
   };
 
   // =======================================================
-  // UI
+  // UI PERMISOS
   // =======================================================
   if (!permission?.granted) {
     return (
-      <View style={styles.center}>
-        <Text style={{ color: "#fff", marginBottom: 10 }}>
-          Se necesita permiso de cámara
-        </Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.button}>
-          <Text style={styles.buttonText}>Dar permiso</Text>
-        </TouchableOpacity>
-      </View>
+      <LinearGradient colors={["#021510", "#04271f", "#06352a"]} style={{ flex: 1 }}>
+        <View style={styles.center}>
+          <View style={styles.permCard}>
+            <Ionicons name="camera" size={40} color="#00f5a0" />
+            <Text style={styles.permTitle}>Permiso de cámara</Text>
+            <Text style={styles.permText}>
+              Para escanear tus dispositivos y ayudarte a reciclar mejor,
+              necesitamos acceso a la cámara.
+            </Text>
+            <TouchableOpacity onPress={requestPermission} style={styles.button}>
+              <Text style={styles.buttonText}>Conceder permiso</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
     );
   }
 
+  // =======================================================
+  // UI PRINCIPAL
+  // =======================================================
   return (
-    <LinearGradient colors={["#05291f", "#094b39", "#0a5743"]} style={{ flex: 1 }}>
+    <LinearGradient colors={["#021510", "#04271f", "#06352a"]} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Animated.View style={{ opacity: fadeAnim }}>
-          {/* Cámara */}
-          <View style={styles.cameraContainer}>
-            <CameraView ref={cameraRef} style={styles.camera} facing="back" />
-            <View style={styles.overlay}>
-              <View style={styles.frame} />
-              <Text style={styles.guide}>📷 Toma hasta 3 fotos</Text>
+        {/* HEADER */}
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>Escanear dispositivo</Text>
+              <Text style={styles.subtitle}>
+                Usa la cámara para identificar qué estás reciclando y te mostramos
+                el punto más cercano que lo acepta.
+              </Text>
+            </View>
+            <View style={styles.headerIconWrap}>
+              <Ionicons name="scan" size={26} color="#00f5a0" />
             </View>
           </View>
 
+          <View style={styles.chipsRow}>
+            <View style={styles.chip}>
+              <Ionicons name="camera-outline" size={14} color="#c7ffe0" />
+              <Text style={styles.chipText}>Hasta 3 fotos</Text>
+            </View>
+            <View style={styles.chip}>
+              <Ionicons name="sparkles-outline" size={14} color="#c7ffe0" />
+              <Text style={styles.chipText}>IA de reconocimiento</Text>
+            </View>
+            <View style={styles.chip}>
+              <Ionicons name="location-outline" size={14} color="#c7ffe0" />
+              <Text style={styles.chipText}>Punto más cercano</Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View style={{ opacity: fadeAnim }}>
+          {/* Cámara */}
+          <View style={styles.cameraWrapper}>
+            <View style={styles.cameraShadow}>
+              <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+              <View style={styles.overlay}>
+                <View style={styles.frame} />
+                <Text style={styles.guide}>Enfoca el dispositivo dentro del marco</Text>
+              </View>
+            </View>
+
+            <Text style={styles.tipText}>
+              Consejo: intenta que el dispositivo ocupe la mayor parte del cuadro y
+              evita fondos muy cargados.
+            </Text>
+          </View>
+
           {/* Botón tomar foto */}
-          <TouchableOpacity
-            style={[styles.captureButton, loading && { backgroundColor: "#007b5f" }]}
-            onPress={takePhoto}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="camera" size={20} color="#fff" />
-                <Text style={styles.captureText}>
-                  Tomar Foto ({photos.length}/3)
-                </Text>
-              </>
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              style={[
+                styles.captureButton,
+                loading && { backgroundColor: "rgba(0, 201, 130, 0.4)" },
+              ]}
+              onPress={takePhoto}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <View style={styles.captureInnerCircle}>
+                    <Ionicons name="camera" size={22} color="#021510" />
+                  </View>
+                  <View>
+                    <Text style={styles.captureText}>Capturar foto</Text>
+                    <Text style={styles.captureSubText}>
+                      {photos.length}/{MAX_PHOTOS} usadas
+                    </Text>
+                  </View>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {photos.length > 0 && !loading && (
+              <TouchableOpacity style={styles.analyzeBtn} onPress={analyzeAll}>
+                <Ionicons name="sparkles" size={20} color="#fff" />
+                <Text style={styles.analyzeText}>Analizar con IA</Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+          </View>
 
           {/* Vista previa fotos */}
-          {photos.map((p, i) => (
-            <View key={i} style={styles.card}>
-              <Image source={{ uri: p.uri }} style={styles.preview} />
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => deletePhoto(i)}
+          {photos.length > 0 && (
+            <View style={styles.previewSection}>
+              <Text style={styles.sectionTitle}>Fotos capturadas</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 4 }}
               >
-                <Ionicons name="trash" size={20} color="#fff" />
-              </TouchableOpacity>
+                {photos.map((p, i) => (
+                  <View key={i} style={styles.card}>
+                    <Image source={{ uri: p.uri }} style={styles.preview} />
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => deletePhoto(i)}
+                    >
+                      <Ionicons name="trash" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
-          ))}
-
-          {/* Analizar todas */}
-          {photos.length > 0 && !loading && (
-            <TouchableOpacity style={styles.analyzeBtn} onPress={analyzeAll}>
-              <Ionicons name="sparkles" size={20} color="#fff" />
-              <Text style={styles.analyzeText}>Analizar todas</Text>
-            </TouchableOpacity>
           )}
 
           {/* Resultado final */}
           {finalResult && (
             <View style={styles.resultBox}>
-              <Text style={styles.resultTitle}>Resultado final:</Text>
-              <Text style={styles.resultLabel}>
-                {finalResult.display} ({finalResult.score}%)
+              <View style={styles.resultHeader}>
+                <Ionicons name="checkmark-circle" size={22} color="#00f5a0" />
+                <Text style={styles.resultTitle}>Resultado de la IA</Text>
+              </View>
+
+              <View style={styles.resultContent}>
+                <Text style={styles.resultLabel}>{finalResult.display}</Text>
+                <Text style={styles.resultScore}>
+                  Confianza: {finalResult.score}%
+                </Text>
+              </View>
+
+              <Text style={styles.resultHint}>
+                Ahora buscamos un punto de reciclaje cercano que acepte este tipo de
+                dispositivo.
               </Text>
             </View>
           )}
@@ -435,11 +512,21 @@ export default function EscanearScreen() {
       <Modal visible={selectVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBoxLarge}>
-            <Text style={styles.modalTitle}>Selecciona tu punto</Text>
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text style={styles.modalTitle}>Selecciona tu punto</Text>
+                <Text style={styles.modalSubtitle}>
+                  Elige manualmente el punto donde estás reciclando.
+                </Text>
+              </View>
+              <View style={styles.modalIconWrap}>
+                <Ionicons name="location-outline" size={22} color="#00f5a0" />
+              </View>
+            </View>
 
             <TextInput
               placeholder="Buscar por comuna o dirección..."
-              placeholderTextColor="#ccc"
+              placeholderTextColor="#9fb3aa"
               style={styles.input}
               value={search}
               onChangeText={setSearch}
@@ -448,6 +535,12 @@ export default function EscanearScreen() {
             <FlatList
               data={filteredPoints}
               keyExtractor={(item, idx) => idx.toString()}
+              style={{ maxHeight: 260 }}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>
+                  No se encontraron puntos con ese filtro.
+                </Text>
+              }
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.pointItem}
@@ -475,123 +568,333 @@ export default function EscanearScreen() {
 }
 
 // =======================================================
-// 🎨 ESTILOS
+// ESTILOS
 // =======================================================
+
 const styles = StyleSheet.create({
-  container: { alignItems: "center", paddingBottom: 80 },
-  cameraContainer: { position: "relative", marginTop: 15 },
-  camera: { width: 320, height: 380, borderRadius: 20, overflow: "hidden" },
+  container: {
+    alignItems: "stretch",
+    paddingBottom: 40,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    gap: 18,
+  },
+
+  // HEADER
+  header: {
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1.2,
+    borderColor: "rgba(0, 245, 160, 0.22)",
+    backgroundColor: "rgba(1, 20, 15, 0.88)",
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 50,
+    backgroundColor: "rgba(0, 245, 160, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 245, 160, 0.28)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    color: "#f8fffd",
+    fontSize: 19,
+    fontWeight: "700",
+  },
+  subtitle: {
+    color: "#ccefe2",
+    fontSize: 13,
+    marginTop: 4,
+    opacity: 0.9,
+  },
+  chipsRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 6,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(3, 55, 43, 0.85)",
+    borderColor: "rgba(0, 245, 160, 0.28)",
+    borderWidth: 0.6,
+  },
+  chipText: {
+    color: "#d2ffef",
+    fontSize: 10.5,
+    letterSpacing: 0.2,
+  },
+
+  // CÁMARA
+  cameraWrapper: {
+    marginTop: 4,
+    alignItems: "center",
+  },
+  cameraShadow: {
+    borderRadius: 28,
+    padding: 3,
+    backgroundColor: "rgba(0, 245, 160, 0.20)",
+  },
+  camera: {
+    width: 320,
+    height: 380,
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#000",
+  },
   overlay: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    inset: 0,
     justifyContent: "center",
     alignItems: "center",
   },
   frame: {
-    width: 240,
-    height: 240,
-    borderWidth: 3,
-    borderColor: "#00ffb2",
-    borderRadius: 25,
-    backgroundColor: "rgba(0,0,0,0.1)",
+    width: 235,
+    height: 235,
+    borderWidth: 2,
+    borderColor: "#00f5a0",
+    borderRadius: 26,
+    backgroundColor: "rgba(0,0,0,0.18)",
   },
   guide: {
     position: "absolute",
-    bottom: 40,
+    bottom: 32,
     color: "#e6fff4",
-    fontWeight: "bold",
-    fontSize: 16,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    padding: 8,
-    borderRadius: 10,
+    fontWeight: "600",
+    fontSize: 14,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    letterSpacing: 0.3,
+  },
+  tipText: {
+    marginTop: 10,
+    color: "#b8e8d7",
+    fontSize: 12,
+    textAlign: "center",
+  },
+
+  // BOTONES PRINCIPALES
+  buttonsRow: {
+    marginTop: 16,
+    flexDirection: "column",
+    gap: 12,
+    alignItems: "center",
   },
   captureButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#00c982",
     paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    marginVertical: 15,
-    gap: 8,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 4 },
   },
-  captureText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  card: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    padding: 8,
-    marginVertical: 8,
-    width: 280,
+  captureInnerCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: "#e6fff4",
     alignItems: "center",
+    justifyContent: "center",
   },
-  preview: { width: 260, height: 260, borderRadius: 10 },
-  deleteButton: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    padding: 5,
-    borderRadius: 6,
+  captureText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14.5,
+    letterSpacing: 0.3,
+  },
+  captureSubText: {
+    color: "#f0fff9",
+    fontSize: 11.5,
+    opacity: 0.8,
   },
   analyzeBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#007b5f",
+    backgroundColor: "#064a37",
     paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    marginTop: 10,
+    paddingHorizontal: 20,
+    borderRadius: 999,
     gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 245, 160, 0.4)",
   },
-  analyzeText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  resultBox: {
-    backgroundColor: "rgba(0,255,162,0.12)",
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    alignItems: "center",
-  },
-  resultTitle: { color: "#c7ffe0", fontSize: 15 },
-  resultLabel: {
-    color: "#00ffb2",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 5,
+  analyzeText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
 
+  // PREVIEW FOTOS
+  previewSection: {
+    marginTop: 18,
+    gap: 8,
+  },
+  sectionTitle: {
+    color: "#e6fff4",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  card: {
+    backgroundColor: "rgba(3, 37, 30, 0.95)",
+    borderRadius: 16,
+    padding: 6,
+    marginRight: 10,
+    width: 175,
+    shadowColor: "#000",
+    shadowOpacity: 0.28,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  preview: {
+    width: "100%",
+    height: 150,
+    borderRadius: 12,
+  },
+  deleteButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    padding: 5,
+    borderRadius: 999,
+  },
+
+  // RESULTADO
+  resultBox: {
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: "rgba(3, 40, 30, 0.98)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 245, 160, 0.28)",
+    gap: 12,
+  },
+  resultHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  resultTitle: {
+    color: "#c7ffe0",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  resultContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+  },
+  resultLabel: {
+    color: "#00f5a0",
+    fontSize: 19,
+    fontWeight: "700",
+  },
+  resultScore: {
+    color: "#e6fff4",
+    fontSize: 13,
+  },
+  resultHint: {
+    color: "#b8e8d4",
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  // MODAL
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 16,
   },
   modalBoxLarge: {
-    backgroundColor: "#0d3a2e",
-    width: "90%",
-    maxHeight: "80%",
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: "#041d17",
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "rgba(0, 245, 160, 0.25)",
   },
-  modalTitle: { color: "#fff", fontSize: 17, marginBottom: 10, textAlign: "center" },
+  modalHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalTitle: {
+    color: "#f8fffd",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  modalSubtitle: {
+    color: "#c0e5d4",
+    fontSize: 12,
+    marginTop: 2,
+  },
   input: {
-    backgroundColor: "#fff",
-    color: "#000",
-    borderRadius: 8,
+    backgroundColor: "#0a2a22",
+    color: "#e6fff4",
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    marginBottom: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(150,210,190,0.6)",
+    fontSize: 13,
   },
   pointItem: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(7,44,34,0.95)",
     borderRadius: 10,
     padding: 10,
-    marginBottom: 8,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,245,160,0.22)",
   },
-  pointText: { color: "#fff", fontSize: 14 },
-  pointSub: { color: "#aaffd8", fontSize: 12 },
-  modalBtn: { alignItems: "center", paddingVertical: 10, borderRadius: 8 },
-  modalText: { color: "#fff", fontWeight: "bold" },
+  pointText: {
+    color: "#f8fffd",
+    fontSize: 13,
+  },
+  pointSub: {
+    color: "#b7e1cf",
+    fontSize: 11,
+    marginTop: 3,
+  },
+  modalBtn: {
+    marginTop: 12,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  modalText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  emptyText: {
+    color: "#a5c7ba",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 8,
+  },
 });

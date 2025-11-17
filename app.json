@@ -13,6 +13,9 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Permitir que ReusoSmartMap acceda a tu ubicación para mostrar los puntos de reciclaje cercanos."
+      },
+      "config": {
+        "googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}"
       }
     },
 
@@ -28,7 +31,12 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "${GOOGLE_MAPS_API_KEY}"
+        }
+      }
     },
 
     "web": {
