@@ -25,7 +25,33 @@ import { BACKEND_URL, HF_API_KEY, HF_MODEL } from "../../config";
 
 console.log(HF_API_KEY);
 console.log(BACKEND_URL);
+/* =======================================================
+   🗂️ DICCIONARIO DE TRADUCCIONES
+   — Evita errores cuando falta una clave
+   — Cubre todo lo que la IA podría detectar
+======================================================= */
+const traducciones = {
+  Laptop: "Computador portátil",
+  Celular: "Teléfono móvil",
+  Pila: "Batería portátil",
 
+  // Variantes que devuelve HuggingFace
+  computer: "Computador",
+  notebook: "Notebook",
+  macbook: "MacBook",
+  phone: "Teléfono",
+  smartphone: "Smartphone",
+  iphone: "iPhone",
+  android: "Celular Android",
+  ipod: "iPod",
+  portable: "Dispositivo portátil",
+  battery: "Batería",
+  powerbank: "Pila portátil",
+  charger: "Cargador",
+
+  // fallback general
+  default: "Dispositivo",
+};
 
 // =======================================================
 // 🧠 NORMALIZADOR UNIVERSAL IA → CATEGORÍAS BD

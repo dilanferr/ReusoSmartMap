@@ -1,0 +1,3 @@
+// !!!!1ver bien esta parte cuando llegues a la casa!!!!!!!!
+// que en vez que ponga si confirmar en la app que diga ir y le ponga una ruta en el mapa para que llegue PEROOO no se si google maps cobra por eso y asi cuando llegue al punto dentro de un ratio de menos 40 metros le aprarexca un boton o una notificacion de reciclar y ahi se suba el reciclaje.
+//si poner que si ir guarde dentro de la app de ese produnto en una ventana y cuando este cerca se le habilite el boton de reciclar
