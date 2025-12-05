@@ -38,18 +38,24 @@ export default function Login() {
       console.log("📥 Respuesta del backend:", data);
 
       if (response.ok && data.token) {
+        // OBJETO DEL USUARIO
         const userData = {
           nombre: data.usuario.nombre,
           email: data.usuario.email,
           rol: data.usuario.rol,
           token: data.token,
+          id: data.usuario._id, // ← IMPORTANTE para reciclaje
         };
 
+        // GUARDAR USER + TOKEN
         await AsyncStorage.setItem("user", JSON.stringify(userData));
         console.log("✅ Usuario guardado:", userData);
 
         Alert.alert("✅ Bienvenido", `Hola ${data.usuario.nombre}`);
-        router.replace("/(tabs)/perfil");
+
+        // REDIRECCIÓN DIRECTA A RECICLA
+        router.replace("/(tabs)/recicla");
+
       } else {
         Alert.alert("Error", data.msg || "Credenciales incorrectas.");
       }
@@ -112,16 +118,20 @@ export default function Login() {
             <Text style={styles.buttonText}>Iniciar Sesión</Text>
           )}
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")}>
-          <Text style={{ 
-              color: "#006D40", 
-              marginTop: 15, 
+          <Text
+            style={{
+              color: "#006D40",
+              marginTop: 15,
               textAlign: "center",
-              fontWeight: "600"
-            }}>
+              fontWeight: "600",
+            }}
+          >
             ¿Olvidaste tu contraseña?
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
           <Text style={styles.link}>
             ¿No tienes cuenta?{" "}

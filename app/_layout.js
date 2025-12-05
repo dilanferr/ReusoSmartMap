@@ -1,13 +1,13 @@
 import { Stack } from "expo-router";
+import { ReusoProvider } from "../context/ReusoContext";
 
 export default function RootLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* 🚀 Abre siempre las pestañas primero */}
-      <Stack.Screen name="(tabs)" />
-      
-      {/* 🔐 Pantallas de autenticación (accesibles desde Perfil) */}
-      <Stack.Screen name="(auth)" />
-    </Stack>
+    <ReusoProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)" />
+      </Stack>
+    </ReusoProvider>
   );
 }

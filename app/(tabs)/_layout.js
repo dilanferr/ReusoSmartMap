@@ -13,10 +13,10 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#1F1F1F",
           borderTopColor: "#1F1F1F",
-          height: route.name === "escanear" ? 0 : 70,
+          height: route.name === "escanear/index" ? 0 : 70,
           paddingBottom: 5,
           paddingTop: 5,
-          display: route.name === "escanear" ? "none" : "flex",
+          display: route.name === "escanear/index" ? "none" : "flex",
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -24,6 +24,7 @@ export default function TabsLayout() {
         },
       })}
     >
+
       <Tabs.Screen
         name="index"
         options={{
@@ -44,8 +45,9 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* ESTA ES LA SOLUCIÓN → LA RUTA CORRECTA */}
       <Tabs.Screen
-        name="escanear"
+        name="escanear/index"
         options={{
           title: "",
           tabBarIcon: () => (
@@ -75,6 +77,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
     </Tabs>
   );
 }
