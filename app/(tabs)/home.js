@@ -242,6 +242,15 @@ export default function HomeScreen() {
         <Ionicons name="options" size={30} color="#fff" />
       </TouchableOpacity>
 
+      {/* BOTÓN A PUNTOS */}
+      <TouchableOpacity
+        style={styles.puntosButton}
+        onPress={() => router.push("/puntos")}
+      >
+        <Ionicons name="location" size={25} color="#fff" />
+      </TouchableOpacity>
+
+
       <FilterSheet
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
@@ -287,6 +296,16 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     elevation: 8,
   },
+
+  puntosButton: {
+  position: "absolute",
+  top: 140,        // debajo del filtro
+  right: 20,
+  backgroundColor: "#006D40",
+  padding: 12,
+  borderRadius: 30,
+  elevation: 8,
+},
 
   markerImage: { width: 35, height: 35 },
 });
