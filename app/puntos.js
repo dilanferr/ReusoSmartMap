@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
-import {View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator} from "react-native";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Puntos() {
   const API_BASE =
-    (process.env.EXPO_PUBLIC_API_URL || "http://192.168.100.24:5000").replace(
+    (process.env.EXPO_PUBLIC_API_URL || "http://10.50.16.237:5000").replace(
       /\/+$/,
       ""
     );

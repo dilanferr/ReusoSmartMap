@@ -1,6 +1,8 @@
+// /app/(tabs)/perfil.js
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { jwtDecode } from "jwt-decode";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -12,33 +14,89 @@ import {
   View,
 } from "react-native";
 
+import { BACKEND_URL } from "../../config";
+
 export default function Perfil() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [totalReciclajes, setTotalReciclajes] = useState(0);
+  const [puntos, setPuntos] = useState(0);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // ======================================================
+  // CARGA DE USUARIO + RECICLAJES + PUNTOS
+  // ======================================================
   useEffect(() => {
-    const loadUser = async () => {
-      const data = await AsyncStorage.getItem("user");
-      if (data) setUser(JSON.parse(data));
-    };
-    loadUser();
+    const load = async () => {
+      const raw = await AsyncStorage.getItem("user");
+      if (!raw) return;
 
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
+      const parsed = JSON.parse(raw);
+      setUser(parsed);
+
+      let uid = null;
+      try {
+        const decoded = jwtDecode(parsed.token);
+        uid = decoded.id;
+      } catch {
+        console.log("❌ No se pudo leer el ID del token");
+      }
+
+      if (uid) obtenerReciclajesYpuntos(uid);
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    load();
   }, []);
 
-  const logout = async () => {
-    await AsyncStorage.removeItem("user");
-    setUser(null);
+  // ======================================================
+  // OBTENER RECICLAJES Y PUNTOS SUMADOS
+  // ======================================================
+  const obtenerReciclajesYpuntos = async (uid) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/reciclaje/usuario/${uid}`);
+      const data = await res.json();
+
+      if (!data?.ok) {
+        setTotalReciclajes(0);
+        setPuntos(0);
+        return;
+      }
+
+      // Total de reciclajes
+      setTotalReciclajes(data.total);
+
+      // SUMA de todos los puntos obtenidos
+      const sumaPuntos = data.data.reduce(
+        (acc, item) => acc + (item.puntos_obtenidos || 0),
+        0
+      );
+
+      setPuntos(sumaPuntos);
+    } catch (err) {
+      console.log("Error cargando reciclajes/puntos:", err);
+      setTotalReciclajes(0);
+      setPuntos(0);
+    }
   };
 
-  // ================================
-  // 🌱 INTERFAZ ANTES DE INICIAR SESIÓN
-  // ================================
+  // ======================================================
+  // LOGOUT
+  // ======================================================
+  const logout = async () => {
+    await AsyncStorage.removeItem("user");
+    router.push("/(auth)/login");
+  };
+
+  // ======================================================
+  // VISTA SIN SESIÓN
+  // ======================================================
   if (!user) {
     return (
       <View style={styles.noUserContainer}>
@@ -51,7 +109,7 @@ export default function Perfil() {
 
         <Text style={styles.noUserTitle}>¡Bienvenido! 👋</Text>
         <Text style={styles.noUserText}>
-          Inicia sesión o crea una cuenta para guardar tus puntos, tus medallas y tu progreso de reciclaje.
+          Inicia sesión o crea una cuenta para ver tu progreso.
         </Text>
 
         <TouchableOpacity
@@ -71,14 +129,20 @@ export default function Perfil() {
     );
   }
 
-  // ================================
-  // 🌟 PERFIL COMPLETO CON SESIÓN
-  // ================================
+  // ========================================
+  // MANEJO SEGURO DEL NOMBRE
+  // ========================================
+  const nombreSeguro =
+    user.name || user.fullname || user.nombre || user.username || "Usuario";
+
+  // ======================================================
+  // PERFIL COMPLETO
+  // ======================================================
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        
-        {/* HEADER MEJORADO */}
+
+        {/* HEADER */}
         <View style={styles.header}>
           <Image
             source={{
@@ -90,32 +154,25 @@ export default function Perfil() {
           />
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{user.name}</Text>
+            <Text style={styles.name}>{nombreSeguro}</Text>
             <Text style={styles.email}>{user.email}</Text>
           </View>
         </View>
 
         {/* ESTADÍSTICAS */}
         <View style={styles.statsContainer}>
+          {/* Reciclajes */}
           <View style={styles.statBox}>
             <FontAwesome5 name="recycle" size={22} color="#006D40" />
-            <Text style={styles.statNumber}>{user.reciclajes || 0}</Text>
+            <Text style={styles.statNumber}>{totalReciclajes}</Text>
             <Text style={styles.statLabel}>Reciclajes</Text>
           </View>
 
+          {/* Puntos */}
           <View style={styles.statBox}>
             <MaterialIcons name="stars" size={24} color="#FFD700" />
-            <Text style={styles.statNumber}>{user.puntos || 0}</Text>
+            <Text style={styles.statNumber}>{puntos}</Text>
             <Text style={styles.statLabel}>Puntos</Text>
-          </View>
-
-          <View style={styles.statBox}>
-            <FontAwesome5 name="leaf" size={22} color="#2ecc71" />
-            <Text style={styles.statNumber}>
-              {user.co2 || 0}
-              <Text style={{ fontSize: 12 }}>kg</Text>
-            </Text>
-            <Text style={styles.statLabel}>CO₂ Reducido</Text>
           </View>
         </View>
 
@@ -139,6 +196,16 @@ export default function Perfil() {
         {/* OPCIONES */}
         <Text style={styles.sectionTitle}>⚙️ Opciones</Text>
 
+        {/* Historial */}
+        <TouchableOpacity
+          style={styles.optionRow}
+          onPress={() => router.push("/historial")}
+        >
+          <Ionicons name="time-outline" size={26} color="#006D40" />
+          <Text style={styles.optionText}>Historial de Reciclajes</Text>
+        </TouchableOpacity>
+
+        {/* Editar perfil */}
         <TouchableOpacity
           style={styles.optionRow}
           onPress={() => router.push("/editar-perfil")}
@@ -147,16 +214,7 @@ export default function Perfil() {
           <Text style={styles.optionText}>Editar perfil</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionRow}>
-          <Ionicons name="notifications-outline" size={26} color="#006D40" />
-          <Text style={styles.optionText}>Notificaciones</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.optionRow}>
-          <Ionicons name="shield-checkmark-outline" size={26} color="#006D40" />
-          <Text style={styles.optionText}>Privacidad</Text>
-        </TouchableOpacity>
-
+        {/* Ayuda */}
         <TouchableOpacity style={styles.optionRow}>
           <Ionicons name="help-circle-outline" size={26} color="#006D40" />
           <Text style={styles.optionText}>Ayuda</Text>
@@ -167,23 +225,24 @@ export default function Perfil() {
           <Ionicons name="log-out-outline" size={26} color="#fff" />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
+
       </ScrollView>
     </Animated.View>
   );
 }
 
-// =========================
-// 🎨 ESTILOS
-// =========================
+//
+// 🎨 ESTILOS — MANTENIDOS IGUAL
+//
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAF9",
     paddingHorizontal: 20,
-    paddingTop: 30, // avatar más abajo
+    paddingTop: 30,
   },
 
-  // NO USER (mejorado)
+  // SIN USUARIO
   noUserContainer: {
     flex: 1,
     justifyContent: "center",
@@ -191,16 +250,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     backgroundColor: "#F9FAF9",
   },
-  noUserImage: {
-    width: 150,
-    height: 150,
-    marginBottom: 25,
-  },
-  noUserTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#006D40",
-  },
+  noUserImage: { width: 150, height: 150, marginBottom: 25 },
+  noUserTitle: { fontSize: 28, fontWeight: "bold", color: "#006D40" },
   noUserText: {
     fontSize: 15,
     color: "#666",
@@ -243,16 +294,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#006D40",
   },
-  name: {
-    fontSize: 23,
-    fontWeight: "bold",
-    color: "#006D40",
-  },
-  email: {
-    fontSize: 14,
-    color: "#777",
-    marginTop: 3,
-  },
+  name: { fontSize: 23, fontWeight: "bold", color: "#006D40" },
+  email: { fontSize: 14, color: "#777", marginTop: 3 },
 
   // ESTADÍSTICAS
   statsContainer: {
@@ -278,12 +321,9 @@ const styles = StyleSheet.create({
     color: "#006D40",
     marginTop: 4,
   },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
-  },
+  statLabel: { fontSize: 12, color: "#666" },
 
-  // BADGES
+  // MEDALLAS
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -291,14 +331,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 20,
   },
-  badgesContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 25,
-  },
+  badgesContainer: { flexDirection: "row", gap: 12, marginBottom: 25 },
   badge: { width: 60, height: 60 },
 
-  // OPTIONS
+  // OPCIONES
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -306,11 +342,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  optionText: {
-    fontSize: 16,
-    marginLeft: 12,
-    color: "#333",
-  },
+  optionText: { fontSize: 16, marginLeft: 12, color: "#333" },
 
   // LOGOUT
   logoutBtn2: {
@@ -324,9 +356,5 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 20,
   },
-  logoutText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  logoutText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });
