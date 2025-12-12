@@ -177,21 +177,14 @@ export default function Perfil() {
         </View>
 
         {/* MEDALLAS */}
-        <Text style={styles.sectionTitle}>🏅 Tus Medallas</Text>
-        <View style={styles.badgesContainer}>
-          <Image
-            source={{ uri: "https://cdn-icons-png.flaticon.com/512/2583/2583383.png" }}
-            style={styles.badge}
-          />
-          <Image
-            source={{ uri: "https://cdn-icons-png.flaticon.com/512/2583/2583311.png" }}
-            style={styles.badge}
-          />
-          <Image
-            source={{ uri: "https://cdn-icons-png.flaticon.com/512/2583/2583363.png" }}
-            style={styles.badge}
-          />
-        </View>
+        <TouchableOpacity
+          style={styles.optionRow}
+          onPress={() => router.push("/medallas")}
+        >
+          <Ionicons name="ribbon-outline" size={26} color="#006D40" />
+          <Text style={styles.optionText}>Mis Medallas</Text>
+        </TouchableOpacity>
+
 
         {/* OPCIONES */}
         <Text style={styles.sectionTitle}>⚙️ Opciones</Text>
@@ -215,8 +208,11 @@ export default function Perfil() {
         </TouchableOpacity>
 
         {/* Ayuda */}
-        <TouchableOpacity style={styles.optionRow}>
-          <Ionicons name="help-circle-outline" size={26} color="#006D40" />
+        <TouchableOpacity
+          style={styles.optionRow}
+          onPress={() => router.push("/ayuda")}
+        >
+          <Ionicons name="help-outline" size={26} color="#006D40" />
           <Text style={styles.optionText}>Ayuda</Text>
         </TouchableOpacity>
 

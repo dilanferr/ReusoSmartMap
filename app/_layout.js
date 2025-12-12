@@ -6,14 +6,12 @@ export default function RootLayout() {
     <ReusoProvider>
       <Stack screenOptions={{ headerShown: false }}>
 
-        {/* Pantalla principal */}
-        <Stack.Screen name="index" />
-
-        {/* Tus tabs siguen funcionando igual */}
+        {/* Tus tabs */}
         <Stack.Screen name="(tabs)" />
 
         {/* Login / registro */}
         <Stack.Screen name="(auth)" />
+
       </Stack>
     </ReusoProvider>
   );
