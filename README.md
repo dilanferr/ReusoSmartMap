@@ -1,50 +1,62 @@
-# Welcome to your Expo app 👋
+# ♻️ ReusoSmart
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+🌱 **ReusoSmart** es una aplicación móvil sustentable orientada a fomentar el **reciclaje responsable de residuos electrónicos (RAEE)**, conectando a las personas con puntos de reciclaje cercanos mediante geolocalización, códigos QR y un sistema de incentivos.
 
-## Get started
+El proyecto nace como una iniciativa tecnológica con enfoque **ecológico y social**, buscando reducir el impacto ambiental de los desechos electrónicos y promover una cultura de reutilización y reciclaje consciente.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🌍 Objetivo del Proyecto
 
-2. Start the app
+Contribuir a la protección del medio ambiente facilitando el reciclaje de dispositivos electrónicos, incentivando la participación ciudadana y apoyando la economía circular a través de la tecnología.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🚀 Funcionalidades Principales
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- 📍 **Geolocalización de puntos de reciclaje**
+- 🔐 **Registro y autenticación de usuarios**
+- 📷 **Escaneo de códigos QR en puntos de reciclaje**
+- 🏆 **Sistema de puntos y medallas**
+- ♻️ **Registro de reciclaje de dispositivos electrónicos**
+- 📊 **Historial de acciones del usuario**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🛠️ Tecnologías Utilizadas
 
-When you're ready, run:
+### 📱 Frontend
+- React Native
+- Expo
+
+### 🖥️ Backend
+- Node.js
+- Express
+
+### 🗄️ Base de Datos
+- MongoDB
+
+### ☁️ Servicios y Herramientas
+- Cloudinary (gestión de imágenes y QR)
+- APIs de geolocalización
+- Git & GitHub
+
+---
+
+## 🌱 Enfoque Sustentable
+
+ReusoSmart promueve:
+- La correcta disposición de residuos electrónicos
+- La reducción de contaminación ambiental
+- La reutilización de dispositivos tecnológicos
+- La educación ambiental mediante incentivos digitales
+
+El sistema de recompensas busca **motivar buenas prácticas ecológicas**, transformando acciones responsables en reconocimiento y beneficios simbólicos dentro de la aplicación.
+
+---
+
+## ▶️ Ejecución del Proyecto
 
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+npm install
+npm start
